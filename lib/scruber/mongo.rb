@@ -6,6 +6,7 @@ require "scruber/mongo/configuration"
 require "scruber/mongo/factory"
 
 require "scruber/queue_adapters/mongo"
+require "scruber/core/extensions/mongo_output"
 
 module Scruber
   module Mongo

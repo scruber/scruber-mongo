@@ -29,9 +29,9 @@ module Scruber
         end
       end
 
-      def initialize(options={})
-        super(options)
-      end
+      # def initialize(options={})
+      #   super(options)
+      # end
 
       def push(url_or_page, options={})
         if url_or_page.is_a?(Page)
