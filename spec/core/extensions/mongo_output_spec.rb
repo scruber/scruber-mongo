@@ -66,7 +66,7 @@ RSpec.describe Scruber::Core::Extensions::MongoOutput do
 
         $record = mongo_find_product title: 'iPhone'
       end
-      expect($record[:title]).to eq('iPhone')
+      expect($record.first[:title]).to eq('iPhone')
     end
 
     it "should create 3 records in scruber_sample_product" do
@@ -82,17 +82,30 @@ RSpec.describe Scruber::Core::Extensions::MongoOutput do
     end
   end
 
-  # describe "csv_{pattern}_file" do
-  #   it "should register file and write output" do
-  #     # described_class.register
-  #     csv_file_name = File.join(File.expand_path(File.dirname(__FILE__)), 'products.csv')
-  #     Scruber.run :sample do
-  #       csv_products_file csv_file_name, col_sep: '|'
-  #       csv_products_out [1,2,3]
-  #     end
-  #     expect(File.exists?(csv_file_name)).to be_truthy
-  #     expect(File.open(csv_file_name, 'r'){|f| f.read }.strip).to eq('1|2|3')
-  #     File.delete(csv_file_name) if File.exists?(csv_file_name)
-  #   end
-  # end
+  describe "#mongo_collection" do
+    it "should return default collection" do
+      Scruber.run :sample do
+        mongo_out name: 'Test'
+
+        $collection = mongo_collection
+      end
+      expect($collection.name).to eq("scruber_sample_#{Scruber::Core::Extensions::MongoOutput.default_suffix_name}")
+    end
+
+    it "should return products collection" do
+      Scruber.run :sample do
+        $collection = mongo_products_collection
+      end
+      expect($collection.name).to eq("scruber_sample_products")
+    end
+
+    it "should return products collection twice" do
+      Scruber.run :sample do
+        $collection = mongo_products_collection
+        $collection = mongo_products_collection
+      end
+      expect($collection.name).to eq("scruber_sample_products")
+    end
+  end
+
 end
