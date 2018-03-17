@@ -1,4 +1,5 @@
 require "bundler/setup"
+require 'webmock/rspec'
 require "scruber/mongo"
 require 'database_cleaner'
 
@@ -7,6 +8,26 @@ def file_path( *paths )
 end
 Mongo::Logger.level = 1
 Scruber::Mongo.configuration.load!(file_path('config.yml'))
+
+Scruber::Helpers::UserAgentRotator.configure do
+  add "Scruber 1.0", tags: [:robot, :scruber]
+  add "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36", tags: [:desktop, :chrome, :macos]
+end
+
+Scruber.configure do |config|
+  config.fetcher_adapter = :typhoeus_fetcher
+  config.fetcher_options = {
+    max_concurrency: 1,
+    max_retry_times: 5,
+    retry_delays: [1,2,2,4,4],
+    followlocation: false,
+    request_timeout: 15,
+  }
+  config.fetcher_agent_adapter = :memory
+  config.fetcher_agent_options = {}
+  config.queue_adapter = :memory
+  config.queue_options = {}
+end
 
 DatabaseCleaner[:mongo].strategy = :truncation
 DatabaseCleaner[:mongo].db = Scruber::Mongo.client.database

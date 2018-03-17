@@ -4,6 +4,7 @@ require 'mongo'
 require "scruber/mongo/version"
 require "scruber/mongo/configuration"
 require "scruber/mongo/factory"
+require "scruber/mongo/cli/generators"
 
 require "scruber/queue_adapters/mongo"
 require "scruber/core/extensions/mongo_output"
