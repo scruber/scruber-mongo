@@ -60,5 +60,12 @@ RSpec.describe Scruber::QueueAdapters::Mongo do
       
       expect(queue.find('abc')).to eq(nil)
     end
+
+    it "should save additional arguments" do
+      queue.add "http://example.abc", _id: 'abc', test_id: '1'
+      page = queue.find 'abc'
+      
+      expect(page.options[:test_id]).to eq('1')
+    end
   end
 end

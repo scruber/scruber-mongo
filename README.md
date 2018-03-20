@@ -1,38 +1,50 @@
-# Scruber::Mongo
+# Scruber-mongo
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/scruber/mongo`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+This gem provides Mongo support for Scruber
 
 ## Installation
 
-Add this line to your application's Gemfile:
+1. Add this line to your application's Gemfile:
 
 ```ruby
 gem 'scruber-mongo'
 ```
 
-And then execute:
+2. And then execute:
 
     $ bundle
 
-Or install it yourself as:
+3. Install gem
 
-    $ gem install scruber-mongo
+    $ scruber generate mongo:install
 
-## Usage
+This gem provides Queue driver, Output driver and FetcherAgent driver for mongo.
 
-TODO: Write usage instructions here
+## Sample scraper
 
-## Development
+```ruby
+Scruber.run do
+  get "http://example.abc/product"
+  
+  parse :html do |page, doc|
+    id = mongo_out_product title: doc.at('title').text
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+    get_reviews URI.join(page.url, doc.at('a.review_link').attr('href')).to_s, product_id: id
+  end
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+  parse_reviews :html do |page,doc|
+    product = mongo_find_product page.options[:product_id]
+
+    product[:reviews] = doc.search('.review').map{|r| {author: r.at('.author').text, text: r.at('.text').text } }
+
+    mongo_out_product product
+  end
+end
+```
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/scruber-mongo.
+Bug reports and pull requests are welcome on GitHub at https://github.com/scruber/scruber-mongo.
 
 ## License
 
