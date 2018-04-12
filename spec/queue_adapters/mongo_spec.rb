@@ -1,11 +1,17 @@
 require "spec_helper"
 
 RSpec.describe Scruber::QueueAdapters::Mongo do
-  let(:queue){ described_class.new }
+  let(:queue){ described_class.new scraper_name: 'test' }
 
   it "queue page for downloading" do
     queue.add "http://example.com"
-    expect(queue.queue_size).to eq(1)
+    expect(queue.size).to eq(1)
+  end
+
+  it "should have correct mongo collection name" do
+    Scruber::Mongo.client['scruber_test_pages'].drop
+    queue.add "http://example.com"
+    expect(Scruber::Mongo.client['scruber_test_pages'].count).to eq(1)
   end
 
   it "shift enqueued page" do

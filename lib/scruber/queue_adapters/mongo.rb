@@ -9,6 +9,9 @@ module Scruber
         end
 
         def save(options={})
+          if @max_retry_times && @retry_count >= @max_retry_times.to_i
+            @retry_at = 1.year.from_now.to_i
+          end
           if id.blank?
             @queue.collection.insert_one(attrs)
           else
@@ -43,7 +46,7 @@ module Scruber
       end
       alias_method :add, :push
 
-      def queue_size
+      def size
         collection.count
       end
 

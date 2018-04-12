@@ -18,6 +18,7 @@ module Scruber
 
         def create_files
           template 'mongo.tt', File.expand_path('../../config/mongo.yml', APP_PATH)
+          template 'mongo_initializer.tt', File.expand_path('../../config/initializers/mongo.rb', APP_PATH)
         end
 
         def change_config
