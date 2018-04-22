@@ -1,25 +1,29 @@
 module Scruber
   module QueueAdapters
     class Mongo < AbstractAdapter
-      attr_reader :error_pages
 
       class Page < Scruber::QueueAdapters::AbstractAdapter::Page
         def id
-          @options[:_id] || @options[:id]
+          @options[:_id] || @id
         end
 
-        def save(options={})
-          if @max_retry_times && @retry_count >= @max_retry_times.to_i
-            @retry_at = 1.year.from_now.to_i
-          end
+        def save(options={}, save_options={})
           if id.blank?
             @queue.collection.insert_one(attrs)
           else
-            @queue.collection.find_one_and_update(
-              {"_id" => self.id },
-              {'$set' => attrs },
-              {return_document: :before, upsert: true, projection: {_id: 1}}.merge(options)
-            )
+            if options[:new]
+              @queue.collection.find_one_and_update(
+                {"_id" => self.id },
+                {'$setOnInsert' => attrs },
+                {return_document: :after, upsert: true, projection: {_id: 1}}.merge(options)
+              )
+            else
+              @queue.collection.find_one_and_update(
+                {"_id" => self.id },
+                {'$set' => attrs },
+                {return_document: :after, upsert: true, projection: {_id: 1}}.merge(options)
+              )
+            end
           end
         end
 
@@ -36,18 +40,22 @@ module Scruber
       #   super(options)
       # end
 
-      def push(url_or_page, options={})
+      def add(url_or_page, options={})
         if url_or_page.is_a?(Page)
           url_or_page.queue = self
-          url_or_page.save(options)
+          url_or_page.save({new: true}.merge(options))
         else
-          Page.new(self, url_or_page, options).save
+          Page.new(self, options.merge(url: url_or_page)).save({new: true})
         end
       end
-      alias_method :add, :push
+      alias_method :push, :add
 
       def size
         collection.count
+      end
+
+      def downloaded_count
+        collection.find({fetched_at: {"$gt" => 0}}).count
       end
 
       def find(id)
@@ -64,9 +72,9 @@ module Scruber
 
       def fetch_pending(count=nil)
         if count.nil?
-          build_pages collection.find({fetched_at: 0, retry_at: {"$lte" => Time.now.to_i}}).first
+          build_pages collection.find({fetched_at: 0, retry_count: {"$lt" => ::Scruber.configuration.fetcher_options[:max_retry_times]}, retry_at: {"$lte" => Time.now.to_i}}).first
         else
-          build_pages collection.find({fetched_at: 0, retry_at: {"$lte" => Time.now.to_i}}).limit(count).to_a
+          build_pages collection.find({fetched_at: 0, retry_count: {"$lt" => ::Scruber.configuration.fetcher_options[:max_retry_times]}, retry_at: {"$lte" => Time.now.to_i}}).limit(count).to_a
         end
       end
 
@@ -78,15 +86,19 @@ module Scruber
         Scruber::Mongo.client[pages_collection_name]
       end
 
+      def initialized?
+        Scruber::Mongo.client[pages_collection_name].find.first.present?
+      end
+
       private
 
         def build_pages(pages)
           if pages.nil?
             nil
           elsif pages.is_a?(Array)
-            pages.map{|p| Page.new(self, p['url'], p.with_indifferent_access )}
+            pages.map{|p| Page.new(self, p.with_indifferent_access.merge(url: p['url']) )}
           else
-            Page.new(self, pages['url'], pages.with_indifferent_access )
+            Page.new(self, pages.with_indifferent_access.merge(url: pages['url']) )
           end
         end
 

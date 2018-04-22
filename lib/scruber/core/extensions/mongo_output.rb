@@ -60,13 +60,13 @@ module Scruber
           def mongo_out(scraper_name, suffix, fields, options={})
             fields = fields.with_indifferent_access
             if fields[:_id].blank?
-              Scruber::Mongo.client[out_collection_name(scraper_name, suffix)].insert_one(fields)
+              Scruber::Mongo.client[out_collection_name(scraper_name, suffix)].insert_one(fields).inserted_id
             else
               Scruber::Mongo.client[out_collection_name(scraper_name, suffix)].find_one_and_update(
                 {"_id" => fields[:_id] },
                 {'$set' => fields },
-                {return_document: :before, upsert: true}.merge(options)
-              )
+                {return_document: :after, upsert: true}.merge(options)
+              )[:_id]
             end
           end
 

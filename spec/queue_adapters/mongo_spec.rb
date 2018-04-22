@@ -3,10 +3,8 @@ require "spec_helper"
 RSpec.describe Scruber::QueueAdapters::Mongo do
   let(:queue){ described_class.new scraper_name: 'test' }
 
-  it "queue page for downloading" do
-    queue.add "http://example.com"
-    expect(queue.size).to eq(1)
-  end
+  it_behaves_like "queue_adapter"
+
 
   it "should have correct mongo collection name" do
     Scruber::Mongo.client['scruber_test_pages'].drop
@@ -18,26 +16,6 @@ RSpec.describe Scruber::QueueAdapters::Mongo do
     queue.add "http://example.com"
     page = queue.fetch_pending
     expect(page.url).to eq("http://example.com")
-  end
-
-  it "should update page" do
-    queue.add "http://example.com"
-    page = queue.fetch_pending
-    page.url = "http://example.net"
-    page.save
-    page = queue.fetch_pending
-    expect(page.url).to eq("http://example.net")
-  end
-
-  it "should update page and fetch downloaded page" do
-    queue.add "http://example.com"
-    page = queue.fetch_pending
-    page.fetched_at = Time.now.to_i
-    page.save
-    pending_page = queue.fetch_pending
-    downloaded_page = queue.fetch_downloaded
-    expect(pending_page).to eq(nil)
-    expect(downloaded_page.url).to eq("http://example.com")
   end
 
   context "#save" do
@@ -66,12 +44,20 @@ RSpec.describe Scruber::QueueAdapters::Mongo do
       
       expect(queue.find('abc')).to eq(nil)
     end
+  end
 
-    it "should save additional arguments" do
-      queue.add "http://example.abc", _id: 'abc', test_id: '1'
-      page = queue.find 'abc'
-      
-      expect(page.options[:test_id]).to eq('1')
+  context "#processed!" do
+    it "should update page and set processed_at" do
+      queue.add "http://example.com"
+      page = queue.fetch_pending
+      page.fetched_at = Time.now.to_i
+      page.save
+      downloaded_page = queue.fetch_downloaded
+      downloaded_page.processed!
+      downloaded_page2 = queue.fetch_downloaded
+      expect(downloaded_page2).to eq(nil)
+      downloaded_page = queue.collection.find({_id: downloaded_page.id}).first
+      expect(downloaded_page[:processed_at]).to be > 0
     end
   end
 end

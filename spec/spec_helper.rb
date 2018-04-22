@@ -9,6 +9,8 @@ end
 Mongo::Logger.level = 1
 Scruber::Mongo.configuration.load!(file_path('config.yml'))
 
+Dir[Gem.loaded_specs['scruber'].full_gem_path+"/spec/support/**/*.rb"].each { |f| require f }
+
 Scruber::Helpers::UserAgentRotator.configure do
   add "Scruber 1.0", tags: [:robot, :scruber]
   add "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36", tags: [:desktop, :chrome, :macos]

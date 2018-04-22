@@ -3,7 +3,7 @@ require "spec_helper"
 RSpec.describe Scruber::QueueAdapters::Mongo::Page do
 
   describe "page" do
-    let(:page) { described_class.new(nil, 'http://example.com') }
+    let(:page) { described_class.new(nil, url: 'http://example.com') }
 
     it 'should have valid url' do
       expect(page.url).to eq('http://example.com')

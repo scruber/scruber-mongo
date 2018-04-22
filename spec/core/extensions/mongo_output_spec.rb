@@ -39,6 +39,20 @@ RSpec.describe Scruber::Core::Extensions::MongoOutput do
       expect(Scruber::Mongo.client[:scruber_sample_product].count).to eq(3)
       expect(Scruber::Mongo.client[:scruber_sample_product].find.to_a.map{|t| t[:title]}.sort).to eq(["Soap 1", "Soap 2", "Soap 3"])
     end
+
+    it "should return id of document on new insert" do
+      Scruber.run :sample do
+        $id = mongo_out_product title: 'TestID1'
+      end
+      expect(Scruber::Mongo.client[:scruber_sample_product].find({_id: $id}).first[:title]).to eq('TestID1')
+    end
+
+    it "should return id of document on update" do
+      Scruber.run :sample do
+        $id = mongo_out_product id: 'abc', title: 'TestID2'
+      end
+      expect(Scruber::Mongo.client[:scruber_sample_product].find({_id: $id}).first[:title]).to eq('TestID2')
+    end
   end
 
   describe "#mongo_find" do
