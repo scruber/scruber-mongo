@@ -7,6 +7,12 @@ module Scruber
           @options[:_id] || @id
         end
 
+        # 
+        # Saving page to queue
+        # @param options [Hash] saving options
+        # @param save_options={} [type] [description]
+        # 
+        # @return [type] [description]
         def save(options={}, save_options={})
           if id.blank?
             @queue.collection.insert_one(attrs)
