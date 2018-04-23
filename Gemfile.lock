@@ -86,7 +86,7 @@ PLATFORMS
 
 DEPENDENCIES
   bundler (~> 1.16)
-  database_cleaner (~> 1.6.0)
+  database_cleaner (~> 1.6, >= 1.6.0)
   rake (~> 10.0)
   rspec (~> 3.0)
   scruber-mongo!
